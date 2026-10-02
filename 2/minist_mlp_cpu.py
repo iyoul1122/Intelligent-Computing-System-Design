@@ -63,26 +63,53 @@ class MNIST_MLP(object):
         self.fc3 = layers.FullyConnectedLayer(num_input=self.hidden2, num_output=self.out_classes)
         self.softmax = layers.SoftmaxLossLayer()
         self.update_layer_list = [self.fc1, self.fc2, self.fc3]
-
+    # 网络参数初始化
     def init_model(self):
         for layer in self.update_layer_list:
             layer.init_param()
 
 # 网络训练模块
-    def forward():
-        pass
+    def forward(self, input):
+        h1 = self.fc1.forward(input)
+        h1 = self.relu1.forward(h1)
+        h2 = self.fc2.forward(h1)
+        h2 = self.relu2.forward(h2)
+        h3 = self.fc3.forward(h2)
+        prob = self.softmax(h3)
+        return prob
 
-    def backward():
-        pass
+    def backward(self):
+        dloss = self.softmax.backward()
+        dh3 = self.fc3.backward(dloss)
+        dh2 = self.relu2.backward(dh3)
+        dh2 = self.fc2.backward(dh2)
+        dh1 = self.relu1.backward(dh2)
+        dh1 = self.fc1.backward(dh1)
 
-    def update():
-        pass
+    def update(self, lr):
+        for layer in self.update_layer_list:
+            layer.update_param(lr)
 
-    def save_model():
-        pass
+    def save_model(self, param_dir):
+        params = []
+        params['w1'], params['b1'] = self.fc1.save_param()
+        params['w2'], params['b2'] = self.fc2.save_param()
+        params['w3'], params['b3'] = self.fc3.save_param()
+        np.savez(param_dir, params)
 
-    def train():
-        pass
+    def train(self):
+        max_batch = self.train_data.shape[0] // self.batch_size
+        for idx_epoch in range(self.max_epoch):
+            mlp.shuffle_data()
+            for idx_batch in range(self.max_batch):
+                batch_images = self.train_data[idx_batch * self.batch_size :(idx_batch + 1) * self.batch_size, :-1]
+                batch_labels = self.train_data[idx_batch * self.batch_size :(idx_batch + 1) * self.batch_size, -1]
+                prob = self.forward(batch_images)
+                loss = self.softmax.get_loss(batch_labels)
+                self.backward()
+                self.update(self.lr)
+                if idx_batch % self.print_iter == 0:
+                    print('Epoch %d, iter %d, loss: %.6f' % (idx_epoch, idx_batch, loss))
 
 # 网络推理模块
     def load_model():
