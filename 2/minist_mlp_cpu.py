@@ -1,6 +1,8 @@
 import struct, os
 import numpy as np
 
+import layers
+
 MNIST_DIR = ""
 TRAIN_DATA = ""
 TRAIN_LABEL = ""
@@ -40,14 +42,31 @@ def load_data(self):
 
 # 网络结构模块
 class MNIST_MLP(object):
-    def __init__():
-        pass
+    # 神经网络初始化
+    def __init__(self, batch_size=100, input_size=784, hidden1=32, hidden2=16,
+                 out_classes=10, lr=0.01, max_epoch=2, print_iter=100):
+        self.batch_size = batch_size
+        self.input_size = input_size
+        self.hidden1 = hidden1
+        self.hidden2 = hidden2
+        self.out_classes = out_classes
+        self.lr = lr
+        self.max_epoch = max_epoch
+        self.print_iter = print_iter
+    # 建立网络结构
+    def build_model(self):
+        print("Building multi-layer perception model...")
+        self.fc1 = layers.FullyConnectedLayer(num_input=self.input_size, num_output=self.hidden1)
+        self.relu1 = layers.ReLULayer()
+        self.fc2 = layers.FullyConnectedLayer(num_input=self.hidden1, num_output=self.hidden2)
+        self.relu2 = layers.ReLULayer()
+        self.fc3 = layers.FullyConnectedLayer(num_input=self.hidden2, num_output=self.out_classes)
+        self.softmax = layers.SoftmaxLossLayer()
+        self.update_layer_list = [self.fc1, self.fc2, self.fc3]
 
-    def build_model():
-        pass
-
-    def init_model():
-        pass
+    def init_model(self):
+        for layer in self.update_layer_list:
+            layer.init_param()
 
 # 网络训练模块
     def forward():
