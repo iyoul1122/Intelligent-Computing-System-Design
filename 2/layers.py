@@ -9,7 +9,7 @@ class FullyConnectedLayer(object):
         self.num_output = num_output
     # 参数初始化
     def init_param(self, std = 0.01):
-        self.weight = np.random.nomal(loc=0.0, scale=std,
+        self.weight = np.random.normal(loc=0.0, scale=std,
                                       size=(self.num_input, self.num_output))
         self.bias = np.zeros([1, self.num_output])
     # 前向传播的计算
@@ -21,8 +21,8 @@ class FullyConnectedLayer(object):
     def backward(self, top_diff):
         self.d_weight = np.dot(self.input.T, top_diff)
         self.d_bias = np.sum(top_diff, axis=0, keepdims=True)
-        bootom_diff = np.dot(top_diff, self.d_weight.T)
-        return bootom_diff
+        bottom_diff = np.dot(top_diff, self.weight.T)
+        return bottom_diff
     # 参数更新
     def update_param(self, lr):
         self.weight = self.weight - lr * self.d_weight
