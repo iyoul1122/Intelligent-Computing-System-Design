@@ -1,5 +1,12 @@
 # 基本单元模块
 import numpy as np
+import time
+
+def show_matrix(mat, name):
+    print(name + str(mat.shape) + ' mean %f, std %f' % (mat.mean(), mat.std()))
+
+def show_time(time, name):
+    print(name + str(time))
 
 # 全连接层
 class FullyConnectedLayer(object):
@@ -7,15 +14,20 @@ class FullyConnectedLayer(object):
     def __init__(self, num_input, num_output):
         self.num_input = num_input
         self.num_output = num_output
+        print('\tFully connected layer with input %d, output %d.' % (self.num_input, self.num_output))
     # 参数初始化
     def init_param(self, std = 0.01):
         self.weight = np.random.normal(loc=0.0, scale=std,
                                       size=(self.num_input, self.num_output))
         self.bias = np.zeros([1, self.num_output])
+        show_matrix(self.weight, 'fc weight ')
+        show_matrix(self.bias, 'fc bias ')
     # 前向传播的计算
     def forward(self, input):
+        start_time = time.time()
         self.input = input  # 缓存输入
         self.output = np.dot(self.input, self.weight) + self.bias
+        show_time(time.time() - start_time, 'fc forward time: ')
         return self.output
     # 反向传播的计算
     def backward(self, top_diff):
@@ -29,10 +41,16 @@ class FullyConnectedLayer(object):
         self.bias = self.bias - lr * self.d_bias
     # 参数加载
     def load_param(self, weight, bias):
+        assert self.weight.shape == weight.shape
+        assert self.bias.shape == bias.shape
         self.weight = weight
         self.bias = bias
+        show_matrix(self.weight, 'fc weight ')
+        show_matrix(self.bias, 'fc bias ')
     # 参数保存
     def save_param(self):
+        show_matrix(self.weight, 'fc weight ')
+        show_matrix(self.bias, 'fc bias ')
         return self.weight, self.bias
 
 # ReLU激活层

@@ -3,43 +3,12 @@ import numpy as np
 
 import layers
 
-MNIST_DIR = ""
-TRAIN_DATA = ""
-TRAIN_LABEL = ""
-TEST_DATA = ""
-TEST_LABEL = ""
+MNIST_DIR = "mnist_data"
+TRAIN_DATA = "train-images-idx3-ubyte"
+TRAIN_LABEL = "train-labels-idx1-ubyte"
+TEST_DATA = "t10k-images-idx3-ubyte"
+TEST_LABEL = "t10k-labels-idx1-ubyte"
 
-# 数据加载模块
-def load_mnist(file_dir, is_images=True):
-    bin_file = open(file_dir, 'rb') # 'rb' 得到 bytes 对象
-    bin_data = bin_file.read()
-    bin_file.close()
-
-    # struct.unpack_from(fmt, buffer, offset)：按 fmt 的格式从 buffer 的第 offset 个字节开始解包
-    # 图像文件
-    if is_images:
-        fmt_header = '>iiii'
-        magic, num_image, num_rows, num_cols = struct.unpack_from(fmt_header, bin_data, 0)
-    # 标签文件
-    else:
-        fmt_header = '>ii'
-        magic, num_image = struct.unpack_from(fmt_header, bin_data, 0)
-        num_rows, num_cols = 1, 1
-
-    data_size = num_image * num_rows * num_cols
-    mat_data = struct.unpack_from('>' + str(data_size) + 'B',   # i 表示4字节有符号 int，B 表示 1字节无符号 int。整字段 'B' 前可以加数字表示重复次数。
-                                  bin_data, struct.calcsize(fmt_header))
-    mat_data = np.reshape(mat_data, [num_image, num_rows * num_cols])
-    return mat_data
-
-def load_data():
-    train_images = load_mnist(os.path.join(MNIST_DIR, TRAIN_DATA), True)
-    train_labels = load_mnist(os.path.join(MNIST_DIR, TRAIN_LABEL), False)
-    test_images = load_mnist(os.path.join(MNIST_DIR, TEST_DATA), True)
-    test_labels = load_mnist(os.path.join(MNIST_DIR, TEST_LABEL), False)
-    train_data = np.append(train_images, train_labels, axis=1) # 拼接图像数据和标签
-    test_data = np.append(test_images, test_labels, axis=1)
-    return train_data, test_data
 
 # 网络结构模块
 class MNIST_MLP(object):
@@ -54,6 +23,42 @@ class MNIST_MLP(object):
         self.lr = lr
         self.max_epoch = max_epoch
         self.print_iter = print_iter
+    # 数据加载模块
+    def load_mnist(self, file_dir, is_images=True):
+        bin_file = open(file_dir, 'rb') # 'rb' 得到 bytes 对象
+        bin_data = bin_file.read()
+        bin_file.close()
+
+        # struct.unpack_from(fmt, buffer, offset)：按 fmt 的格式从 buffer 的第 offset 个字节开始解包
+        # 图像文件
+        if is_images:
+            fmt_header = '>iiii'
+            magic, num_images, num_rows, num_cols = struct.unpack_from(fmt_header, bin_data, 0)
+        # 标签文件
+        else:
+            fmt_header = '>ii'
+            magic, num_images = struct.unpack_from(fmt_header, bin_data, 0)
+            num_rows, num_cols = 1, 1
+
+        data_size = num_images * num_rows * num_cols
+        mat_data = struct.unpack_from('>' + str(data_size) + 'B',   # i 表示4字节有符号 int，B 表示 1字节无符号 int。整字段 'B' 前可以加数字表示重复次数。
+                                    bin_data, struct.calcsize(fmt_header))
+        mat_data = np.reshape(mat_data, [num_images, num_rows * num_cols])
+        print('Load images from %s, number: %d, data shape: %s' % (file_dir, num_images, str(mat_data.shape)))
+        return mat_data
+    def load_data(self):
+        print('Loading MNIST data from files...')
+        train_images = self.load_mnist(os.path.join(MNIST_DIR, TRAIN_DATA), True)
+        train_labels = self.load_mnist(os.path.join(MNIST_DIR, TRAIN_LABEL), False)
+        test_images = self.load_mnist(os.path.join(MNIST_DIR, TEST_DATA), True)
+        test_labels = self.load_mnist(os.path.join(MNIST_DIR, TEST_LABEL), False)
+        self.train_data = np.append(train_images, train_labels, axis=1) # 拼接图像数据和标签
+        self.test_data = np.append(test_images, test_labels, axis=1)
+    # 打乱
+    def shuffle_data(self):
+        print('Randomly shuffle MNIST data...')
+        np.random.shuffle(self.train_data)
+
     # 建立网络结构
     def build_model(self):
         print("Building multi-layer perception model...")
@@ -66,6 +71,7 @@ class MNIST_MLP(object):
         self.update_layer_list = [self.fc1, self.fc2, self.fc3]
     # 网络参数初始化
     def init_model(self):
+        print('Initializing parameters of each layer in MLP...')
         for layer in self.update_layer_list:
             layer.init_param()
 
@@ -92,24 +98,18 @@ class MNIST_MLP(object):
             layer.update_param(lr)
 
     def save_model(self, param_dir):
+        print('Saving parameters to file ' + param_dir)
         params = {}
         params['w1'], params['b1'] = self.fc1.save_param()
         params['w2'], params['b2'] = self.fc2.save_param()
         params['w3'], params['b3'] = self.fc3.save_param()
         np.save(param_dir, params)
-
-    def load_data(self):
-        self.train_data, self.test_data = load_data()
-
-    # 打乱
-    def shuffle_data(self):
-        idx = np.random.permutation(self.train_data.shape[0])
-        self.train_data = self.train_data[idx]
     
     def train(self):
         self.max_batch = self.train_data.shape[0] // self.batch_size
         for idx_epoch in range(self.max_epoch):
             self.shuffle_data()
+            print('Start training...')
             for idx_batch in range(self.max_batch):
                 batch_images = self.train_data[idx_batch * self.batch_size :(idx_batch + 1) * self.batch_size, :-1]
                 batch_labels = self.train_data[idx_batch * self.batch_size :(idx_batch + 1) * self.batch_size, -1].astype(np.int64)
@@ -123,6 +123,7 @@ class MNIST_MLP(object):
 # 网络推理模块
     # 加载神经网络参数
     def load_model(self, param_dir):
+        print('Loading parameters from file ' + param_dir)
         params = np.load(param_dir, allow_pickle=True, encoding="latin1").item()
         self.fc1.load_param(params['w1'], params['b1'])
         self.fc2.load_param(params['w2'], params['b2'])
