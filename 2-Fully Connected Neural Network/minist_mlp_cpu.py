@@ -3,7 +3,7 @@ import numpy as np
 
 import layers
 
-MNIST_DIR = "D:\\MyWork\\智能计算系统 大三上\\code\\2-Fully Connected Neural Network\\mnist_data"
+MNIST_DIR = "mnist_data"
 TRAIN_DATA = "train-images-idx3-ubyte"
 TRAIN_LABEL = "train-labels-idx1-ubyte"
 TEST_DATA = "t10k-images-idx3-ubyte"
