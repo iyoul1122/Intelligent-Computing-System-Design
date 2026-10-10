@@ -135,7 +135,7 @@ class MNIST_MLP(object):
 
 # 模型构建函数
 def build_mnist_mlp(param_dir='weight.npy'):
-    h1, h2, e, lr = 32, 16, 10, 0.1
+    h1, h2, e, lr = 256, 128, 10, 0.02
     mlp = MNIST_MLP(hidden1=h1, hidden2=h2, max_epoch=e, lr=lr)
     mlp.load_data()
     mlp.build_model()
