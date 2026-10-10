@@ -3,7 +3,7 @@ import numpy as np
 
 import layers
 
-MNIST_DIR = "mnist_data"
+MNIST_DIR = "D:\\MyWork\\智能计算系统 大三上\\code\\2-Fully Connected Neural Network\\mnist_data"
 TRAIN_DATA = "train-images-idx3-ubyte"
 TRAIN_LABEL = "train-labels-idx1-ubyte"
 TEST_DATA = "t10k-images-idx3-ubyte"
@@ -44,10 +44,8 @@ class MNIST_MLP(object):
         mat_data = struct.unpack_from('>' + str(data_size) + 'B',   # i 表示4字节有符号 int，B 表示 1字节无符号 int。整字段 'B' 前可以加数字表示重复次数。
                                     bin_data, struct.calcsize(fmt_header))
         mat_data = np.reshape(mat_data, [num_images, num_rows * num_cols])
-        print('Load images from %s, number: %d, data shape: %s' % (file_dir, num_images, str(mat_data.shape)))
         return mat_data
     def load_data(self):
-        print('Loading MNIST data from files...')
         train_images = self.load_mnist(os.path.join(MNIST_DIR, TRAIN_DATA), True)
         train_labels = self.load_mnist(os.path.join(MNIST_DIR, TRAIN_LABEL), False)
         test_images = self.load_mnist(os.path.join(MNIST_DIR, TEST_DATA), True)
@@ -56,12 +54,10 @@ class MNIST_MLP(object):
         self.test_data = np.append(test_images, test_labels, axis=1)
     # 打乱
     def shuffle_data(self):
-        print('Randomly shuffle MNIST data...')
         np.random.shuffle(self.train_data)
 
     # 建立网络结构
     def build_model(self):
-        print("Building multi-layer perception model...")
         self.fc1 = layers.FullyConnectedLayer(num_input=self.input_size, num_output=self.hidden1)
         self.relu1 = layers.ReLULayer()
         self.fc2 = layers.FullyConnectedLayer(num_input=self.hidden1, num_output=self.hidden2)
@@ -71,7 +67,6 @@ class MNIST_MLP(object):
         self.update_layer_list = [self.fc1, self.fc2, self.fc3]
     # 网络参数初始化
     def init_model(self):
-        print('Initializing parameters of each layer in MLP...')
         for layer in self.update_layer_list:
             layer.init_param()
 
@@ -98,7 +93,6 @@ class MNIST_MLP(object):
             layer.update_param(lr)
 
     def save_model(self, param_dir):
-        print('Saving parameters to file ' + param_dir)
         params = {}
         params['w1'], params['b1'] = self.fc1.save_param()
         params['w2'], params['b2'] = self.fc2.save_param()
@@ -141,8 +135,8 @@ class MNIST_MLP(object):
 
 # 模型构建函数
 def build_mnist_mlp(param_dir='weight.npy'):
-    h1, h2, e = 32, 16, 10
-    mlp = MNIST_MLP(hidden1=h1, hidden2=h2, max_epoch=e)
+    h1, h2, e, lr = 32, 16, 10, 0.1
+    mlp = MNIST_MLP(hidden1=h1, hidden2=h2, max_epoch=e, lr=lr)
     mlp.load_data()
     mlp.build_model()
     mlp.init_model()
