@@ -50,6 +50,8 @@ class MNIST_MLP(object):
         train_labels = self.load_mnist(os.path.join(MNIST_DIR, TRAIN_LABEL), False)
         test_images = self.load_mnist(os.path.join(MNIST_DIR, TEST_DATA), True)
         test_labels = self.load_mnist(os.path.join(MNIST_DIR, TEST_LABEL), False)
+        train_images = train_images.astype(np.float32) / 255.0
+        test_images  = test_images.astype(np.float32) / 255.0
         self.train_data = np.append(train_images, train_labels, axis=1) # 拼接图像数据和标签
         self.test_data = np.append(test_images, test_labels, axis=1)
     # 打乱
@@ -135,7 +137,7 @@ class MNIST_MLP(object):
 
 # 模型构建函数
 def build_mnist_mlp(param_dir='weight.npy'):
-    h1, h2, e, lr = 256, 128, 10, 0.02
+    h1, h2, e, lr = 256, 128, 10, 0.05
     mlp = MNIST_MLP(hidden1=h1, hidden2=h2, max_epoch=e, lr=lr)
     mlp.load_data()
     mlp.build_model()
