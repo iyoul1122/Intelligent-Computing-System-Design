@@ -12,12 +12,21 @@ class FullyConnectedLayer(object):
         self.num_output = num_output
         print('\tFully connected layer with input %d, output %d.' % (self.num_input, self.num_output))
     # 参数初始化
-    def init_param(self, std = 0.01):
+    def init_param(self, std = None):
+        # He 初始化：std = sqrt(2 / fan_in)，按本层输入维度自适应；显式传入 std 时沿用传入值
+        if std is None:
+            std = np.sqrt(2.0 / self.num_input)
         self.weight = np.random.normal(loc=0.0, scale=std,
                                       size=(self.num_input, self.num_output))
         self.bias = np.zeros([1, self.num_output])
         show_matrix(self.weight, 'fc weight ')
         show_matrix(self.bias, 'fc bias ')
+        # Adam 状态
+        self.m_w = np.zeros_like(self.weight)
+        self.v_w = np.zeros_like(self.weight)
+        self.m_b = np.zeros_like(self.bias)
+        self.v_b = np.zeros_like(self.bias)
+        self.t = 0            # 该层被更新的次数
     # 前向传播的计算
     def forward(self, input):
         self.input = input  # 缓存输入
@@ -30,9 +39,21 @@ class FullyConnectedLayer(object):
         bottom_diff = np.dot(top_diff, self.weight.T)
         return bottom_diff
     # 参数更新
-    def update_param(self, lr):
-        self.weight = self.weight - lr * self.d_weight
-        self.bias = self.bias - lr * self.d_bias
+    def update_param(self, lr, beta1=0.9, beta2=0.999, eps=1e-8):
+        self.t += 1
+        # 权重
+        self.m_w = beta1 * self.m_w + (1 - beta1) * self.d_weight
+        self.v_w = beta2 * self.v_w + (1 - beta2) * (self.d_weight ** 2)
+        m_w_hat = self.m_w / (1 - beta1 ** self.t)
+        v_w_hat = self.v_w / (1 - beta2 ** self.t)
+        self.weight -= lr * m_w_hat / (np.sqrt(v_w_hat) + eps)
+
+        # 偏置
+        self.m_b = beta1 * self.m_b + (1 - beta1) * self.d_bias
+        self.v_b = beta2 * self.v_b + (1 - beta2) * (self.d_bias ** 2)
+        m_b_hat = self.m_b / (1 - beta1 ** self.t)
+        v_b_hat = self.v_b / (1 - beta2 ** self.t)
+        self.bias -= lr * m_b_hat / (np.sqrt(v_b_hat) + eps)
     # 参数加载
     def load_param(self, weight, bias):
         assert self.weight.shape == weight.shape

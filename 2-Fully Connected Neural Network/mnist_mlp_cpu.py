@@ -52,8 +52,21 @@ class MNIST_MLP(object):
         test_labels = self.load_mnist(os.path.join(MNIST_DIR, TEST_LABEL), False)
         train_images = train_images.astype(np.float32) / 255.0
         test_images  = test_images.astype(np.float32) / 255.0
+        # 标记也转 float32：否则 np.append 会把整张表提升成 float64，前面的 float32 白做
+        train_labels = train_labels.astype(np.float32)
+        test_labels  = test_labels.astype(np.float32)
         self.train_data = np.append(train_images, train_labels, axis=1) # 拼接图像数据和标签
         self.test_data = np.append(test_images, test_labels, axis=1)
+    # 数据扩增
+    def shift(self, images, m=2):
+        # 每张图随机平移 ±m 像素，越界补 0（训练时在线生成，不额外占内存）
+        x = images.reshape(-1, 28, 28)
+        pad = np.pad(x, ((0, 0), (m, m), (m, m)))
+        off = np.random.randint(0, 2 * m + 1, (len(x), 2))
+        out = np.empty_like(x)
+        for i, (r, c) in enumerate(off):
+            out[i] = pad[i, r:r + 28, c:c + 28]
+        return out.reshape(len(x), -1)
     # 打乱
     def shuffle_data(self):
         np.random.shuffle(self.train_data)
@@ -109,7 +122,7 @@ class MNIST_MLP(object):
             for idx_batch in range(self.max_batch):
                 batch_images = self.train_data[idx_batch * self.batch_size :(idx_batch + 1) * self.batch_size, :-1]
                 batch_labels = self.train_data[idx_batch * self.batch_size :(idx_batch + 1) * self.batch_size, -1].astype(np.int64)
-                prob = self.forward(batch_images)
+                prob = self.forward(self.shift(batch_images)) # 训练时在线扩增
                 loss = self.softmax.get_loss(batch_labels)
                 self.backward()
                 self.update(self.lr)
@@ -137,14 +150,14 @@ class MNIST_MLP(object):
 
 # 模型构建函数
 def build_mnist_mlp(param_dir='weight.npy'):
-    h1, h2, e, lr = 256, 128, 10, 0.05
+    h1, h2, e, lr = 256, 128, 10, 8e-4
     mlp = MNIST_MLP(hidden1=h1, hidden2=h2, max_epoch=e, lr=lr)
     mlp.load_data()
     mlp.build_model()
     mlp.init_model()
     mlp.train()
     mlp.save_model('mlp-%d-%d-%depoch.npy' % (h1, h2, e))
-    mlp.load_model('mlp-%d-%d-%depoch.npy' % (h1, h2, e))
+    #mlp.load_model('mlp-%d-%d-%depoch.npy' % (h1, h2, e))
     return mlp
 
 # 主函数
