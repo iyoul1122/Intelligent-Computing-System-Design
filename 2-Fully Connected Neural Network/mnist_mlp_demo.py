@@ -32,7 +32,7 @@ class MNIST_MLP(object):
         output_shapem1[3]=hidden1
         self.net.createMlpLayer('fc1', input_shapem1, weight_shapem1, output_shapem1)
         # relu1
-        self.net.creatReLuLayer('relu1')
+        self.net.createReLuLayer('relu1')
         # fc2
         input_shapem2=pycnnl.IntVector(4)  
         input_shapem2[0]=batch_size
@@ -51,7 +51,7 @@ class MNIST_MLP(object):
         output_shapem2[3]=hidden2
         self.net.createMlpLayer('fc2', input_shapem2, weight_shapem2, output_shapem2)
         # relu2
-        self.net.creatReLuLayer('relu2')
+        self.net.createReLuLayer('relu2')
         # fc3
         input_shapem3=pycnnl.IntVector(4)  
         input_shapem3[0]=batch_size
@@ -96,6 +96,7 @@ class MNIST_MLP(object):
     
     def load_data(self, data_path, label_path):
         test_images = self.load_mnist(data_path, True)
+        test_images = test_images.astype(np.float32) / 255.0
         test_labels = self.load_mnist(label_path, False)
         self.test_data = np.append(test_images, test_labels, axis=1)
 
